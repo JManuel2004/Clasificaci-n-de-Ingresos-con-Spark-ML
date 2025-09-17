@@ -199,14 +199,6 @@ python generate_data.py
 - Predicciones interpretadas
 - Fácil generación de PDF
 
-###  **¿Por qué Google Drive?**
-
-**Justificación técnica:**
--  **Compatibilidad**: El CSV generado funciona perfectamente en Google Colab
--  **Versionado**: Control total del dataset original
--  **Colaboración**: Fácil compartir con el equipo
--  **Reproducibilidad**: Resultados consistentes
--  **Persistencia**: Datos seguros en la nube
 
 ---
 
@@ -224,4 +216,5 @@ python generate_data.py
 3. Métricas de evaluación del modelo
 4. Predicciones sobre nuevos datos
 5. Resumen final del proyecto
+
 
