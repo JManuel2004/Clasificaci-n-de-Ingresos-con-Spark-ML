@@ -1,0 +1,10 @@
+age,sex,workclass,fnlwgt,education,hours_per_week
+35,Male,Private,150000,Bachelors,45
+25,Female,Private,120000,HS-grad,35
+45,Male,Gov,200000,Masters,50
+22,Female,Self-emp,80000,11th,20
+55,Male,Private,300000,Doctorate,60
+30,Female,Private,100000,Some-college,40
+28,Male,Self-emp,90000,Bachelors,55
+40,Female,Gov,180000,Masters,42
+33,Male,Private,140000,Assoc-voc,38
