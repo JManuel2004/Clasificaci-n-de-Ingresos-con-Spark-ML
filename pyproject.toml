@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "income-pipeline"
+version = "1.0.0"
+description = "Reproducible PySpark batch pipeline that classifies whether income exceeds 50K."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "pyspark>=4.0,<5",
+    "numpy>=1.21",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+]
+
+[project.scripts]
+income-generate = "income_pipeline.generate:main"
+income-train = "income_pipeline.train:main"
+income-score = "income_pipeline.score:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
