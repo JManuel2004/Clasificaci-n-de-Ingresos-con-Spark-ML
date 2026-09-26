@@ -65,7 +65,7 @@ def score_csv(
     model_dir: Path,
     output_path: Path,
 ) -> dict:
-    if not Path(model_dir).exists():
+    if not Path(model_dir).is_dir():
         raise FileNotFoundError(f"model directory not found: {model_dir}")
     raw = read_income_csv(spark, input_path, include_label=False)
     cleaned = clean_frame(raw, supervised=False, max_invalid_fraction=1.0)
@@ -100,6 +100,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> None:
     configure_logging()
     args = parse_args(argv)
+    if not args.model_dir.is_dir():
+        logger.error(
+            "model directory not found: %s. Train one with: python -m income_pipeline train",
+            args.model_dir,
+        )
+        raise SystemExit(1)
+    if not args.input.is_file():
+        logger.error("input file not found: %s", args.input)
+        raise SystemExit(1)
     spark = build_session("income-score")
     try:
         try:
@@ -109,7 +118,7 @@ def main(argv: list[str] | None = None) -> None:
                 model_dir=args.model_dir,
                 output_path=args.output,
             )
-        except DataQualityError as exc:
+        except (DataQualityError, FileNotFoundError) as exc:
             logger.error("scoring stopped: %s", exc)
             raise SystemExit(1) from exc
     finally:

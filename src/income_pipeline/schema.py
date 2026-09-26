@@ -34,8 +34,8 @@ def read_income_csv(
     Quality checks decide whether that row is rejected.
     """
     source = Path(path)
-    if not source.exists():
-        raise FileNotFoundError(source)
+    if not source.is_file():
+        raise FileNotFoundError(f"input file not found: {source}")
     return (
         spark.read.option("header", True)
         .option("mode", "PERMISSIVE")

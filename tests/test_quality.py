@@ -54,6 +54,12 @@ def test_training_fails_when_one_class_is_missing(spark):
     assert "both labels" in str(caught.value)
 
 
+def test_missing_csv_names_the_file(spark, tmp_path):
+    missing = tmp_path / "missing.csv"
+    with pytest.raises(FileNotFoundError, match="input file not found"):
+        read_income_csv(spark, missing, include_label=True)
+
+
 def test_csv_type_mismatch_is_rejected(spark, tmp_path):
     source = tmp_path / "people.csv"
     source.write_text(

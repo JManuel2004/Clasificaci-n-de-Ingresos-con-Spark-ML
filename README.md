@@ -1,220 +1,108 @@
-# Clasificación de Ingresos con Spark ML
+# Clasificación de ingresos con Spark ML
 
-## Descripción del Proyecto
+Pipeline local que estima si el ingreso de una persona supera los 50 000 dólares. El conjunto de entrenamiento es sintético y la etiqueta sale de una regla fija, así que el mismo comando reproduce el mismo archivo sin descargas externas.
 
-Sistema de clasificación binaria desarrollado para **DataPros** que predice si una persona gana más de $50K al año utilizando características demográficas y laborales. El modelo está implementado con **Apache Spark ML** y **Logistic Regression**.
+Las métricas de holdout miden qué tan bien el modelo recupera esa regla. Describen este generador, no el rendimiento sobre el censo Adult de UCI.
 
-##  Dataset
+## Requisitos
 
-El archivo `adult_income_sample.csv` contiene 2000 registros simulados con las siguientes características:
+- Python 3.9 o superior
+- JDK 17 o superior, con `JAVA_HOME` apuntando al JDK. [Eclipse Temurin 17](https://adoptium.net/) sirve.
+- En Windows el primer arranque de Spark compila un `winutils.exe` mínimo y un sistema de archivos local. Hace falta el compilador `csc.exe` de .NET Framework 4, que viene con Windows, y `javac`, que viene con el JDK. Quien ya tenga un Hadoop con `bin\winutils.exe` puede exportar `HADOOP_HOME` y se reutiliza ese binario.
 
-| Columna | Descripción |
-|---------|-------------|
-| `age` | Edad de la persona (años) |
-| `sex` | Género (Male, Female) |
-| `workclass` | Tipo de empleo (Private, Self-emp, Gov) |
-| `fnlwgt` | Peso estadístico asociado al registro |
-| `education` | Nivel educativo (Bachelors, HS-grad, 11th, Masters, etc.) |
-| `hours_per_week` | Horas trabajadas por semana |
-| `label` | Clase objetivo: >50K o <=50K |
-
-##  Estructura del Proyecto
-
-```
-C:\spark_ml_classification\
-├── adult_income_sample.csv              # Datos de entrenamiento (2000 registros)
-├── generate_data.py                     # Script para generar datos simulados
-├── income_classification.py             # Script principal de PySpark
-├── income_classification_notebook.ipynb # Jupyter notebook con evidencia
-└── README.md                           # Este archivo
-```
-
-##  Instalación y Ejecución
-
-### Requisitos Previos
-
-1. **Python 3.7+**
-2. **Java 8 o 11** (requerido por Spark)
-3. **PySpark**
-
-###  **Archivos del Proyecto**
-
-| Archivo | Descripción |
-|---------|-------------|
-| `generate_data.py` | Generador del dataset CSV con 2000 registros simulados |
-| `adult_income_sample.csv` | Dataset generado para entrenamiento del modelo |
-| `income_classification_colab.ipynb` | Notebook principal para Google Colab |
-| `README.md` | Documentación completa del proyecto |
-
-### Instalación
+## Instalación
 
 ```bash
-# Para generar datos localmente (opcional)
-pip install pandas numpy
-
-# En Google Colab se instala automáticamente:
-# pip install pyspark
+python -m venv .venv
 ```
 
-### Generación del Dataset
+Windows:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
+```
+
+macOS y Linux:
 
 ```bash
-# Ejecutar el generador de datos (solo si necesitas regenerar el CSV)
-python generate_data.py
-# Esto crea: adult_income_sample.csv con 2000 registros
+source .venv/bin/activate
+python -m pip install -e ".[dev]"
 ```
 
-##  Componentes Técnicos
+## Uso
 
-### Pipeline de Machine Learning
+Desde la raíz del repositorio:
 
-1. **StringIndexer**: Convierte variables categóricas a índices numéricos
-2. **OneHotEncoder**: Transforma índices a vectores binarios
-3. **VectorAssembler**: Combina todas las características en un vector
-4. **LogisticRegression**: Modelo de clasificación binaria
-
-### Características del Modelo
-
-- **Algoritmo**: Regresión Logística
-- **Máximo de iteraciones**: 100
-- **Parámetro de regularización**: 0.01
-- **Variables predictoras**: 
-  - Numéricas: age, fnlwgt, hours_per_week
-  - Categóricas: sex, workclass, education (codificadas)
-
-##  Resultados Esperados
-
-El modelo genera:
-
-1. **Predicciones binarias**: 0 (<=50K) o 1 (>50K)
-2. **Probabilidades**: Vector con probabilidades para cada clase
-3. **Métricas de evaluación**:
-   - Precisión (Accuracy)
-   - Área bajo la curva ROC (AUC)
-   - Matriz de confusión
-
-### Ejemplo de Salida
-
-```
- Métricas de evaluación:
-   Área bajo la curva ROC (AUC): 0.8234
-   Precisión (Accuracy): 0.7650
-   Predicciones correctas: 1530
-   Total de predicciones: 2000
-```
-
-##  Casos de Uso
-
-### Predicción con Nuevos Datos
-
-El notebook incluye 9 casos de prueba que demuestran diferentes perfiles:
-
-1. **Profesional con título**: 35 años, Bachelors, 45h/semana → Probable >50K
-2. **Joven con educación básica**: 25 años, HS-grad, 35h/semana → Probable <=50K
-3. **Empleado gobierno con maestría**: 45 años, Masters, 50h/semana → Probable >50K
-4. **Trabajador independiente joven**: 22 años, 11th grade, 20h/semana → Probable <=50K
-5. **Profesional senior con doctorado**: 55 años, Doctorate, 60h/semana → Muy probable >50K
-
-##  Análisis y Reflexiones
-
-### Factores Influyentes
-
-1. **Educación**: Mayor nivel educativo correlaciona con ingresos altos
-2. **Edad**: Experiencia laboral (edad media) favorece ingresos altos
-3. **Horas trabajadas**: Más de 40 horas/semana aumenta probabilidad >50K
-4. **Tipo de empleo**: Sector privado muestra mejor performance
-
-### Limitaciones
-
-- Datos simulados (no representan población real)
-- Variables limitadas (podrían incluirse más características)
-- No hay división train/test (overfitting potencial)
-
-##  Extensiones Posibles
-
-1. **División train/test**: Validación más robusta
-2. **Más algoritmos**: Random Forest, Gradient Boosting
-3. **Feature engineering**: Nuevas variables derivadas
-4. **Validación cruzada**: Mejor estimación de rendimiento
-5. **Datos reales**: Usar dataset Adult Income original
-
-## Contacto
-
-Proyecto desarrollado para **DataPros**  
-Sistema de predicción de ingresos con Apache Spark ML
-
----
-
-**¡El modelo está listo para predecir ingresos basado en características demográficas y laborales!** 
-
----
-
-##  **Ejecución en Google Colab**
-
-###  **Archivo para Colab:** `income_classification_colab.ipynb`
-
-Este proyecto incluye una versión **completamente adaptada para Google Colab** que permite ejecutar el mismo pipeline sin problemas de configuración local.
-
-###  **Instrucciones para ejecutar en Google Colab:**
-
-#### **Paso 1: Preparar el dataset**
 ```bash
-# 1. Ejecuta localmente el generador de datos (si aún no lo hiciste):
-python generate_data.py
-
-# 2. Esto crea: adult_income_sample.csv (2000 registros)
+income-generate
+income-train
+income-score
 ```
 
-#### **Paso 2: Subir a Google Drive**
-1.  Abre [Google Drive](https://drive.google.com)
-2.  Sube el archivo `adult_income_sample.csv` a la raíz de tu Drive
-3.  Verifica que esté en: `/content/drive/MyDrive/adult_income_sample.csv`
+Los mismos pasos sin instalar los scripts:
 
-#### **Paso 3: Ejecutar en Colab**
-1.  Abre [Google Colab](https://colab.research.google.com/)
-2.  Sube el archivo `income_classification_colab.ipynb`
-3.  Ejecuta **todas las celdas secuencialmente**
-4.  Autoriza el acceso a Google Drive cuando se solicite
+```bash
+python -m income_pipeline generate
+python -m income_pipeline train
+python -m income_pipeline score
+```
 
-###  **Ventajas de la versión Colab:**
+`income-generate` escribe 20 000 filas en `data/raw/adult_income_sample.csv` con la semilla 42. `income-train` ajusta una regresión logística sobre un holdout del 20 % y guarda el modelo en `models/income_lr`. `income-score` puntúa `data/samples/applicants.csv` y escribe `data/scored/applicants.csv`.
 
-####  **Configuración automática:**
-- PySpark se instala automáticamente
-- No requiere configuración de Java local
-- Entorno limpio y consistente
+Salidas de entrenamiento:
 
-####  **Integración con Google Drive:**
-- Lee el mismo CSV usado localmente
-- Mantiene compatibilidad entre entornos
-- Facilita colaboración del equipo
+| Ruta | Contenido |
+| --- | --- |
+| `models/income_lr` | Pipeline de Spark ML ajustado |
+| `artifacts/metrics.json` | AUC, precisión, recall y F1 en train y en test |
+| `artifacts/quality_report.json` | Filas de entrada, rechazos y duplicados |
+| `data/scored/applicants.csv` | Etiqueta predicha y probabilidad de `>50K` |
 
-####  **Resultados idénticos:**
-- Mismo pipeline de ML (StringIndexer + OneHotEncoder + VectorAssembler + LogisticRegression)
-- Mismas métricas de evaluación
-- Predicciones consistentes
+Esas rutas están en `.gitignore`. El CSV de entrenamiento también: se vuelve a crear con `income-generate`.
 
-####  **Evidencia de ejecución:**
-- Salida detallada de cada etapa
-- Métricas de rendimiento visibles
-- Predicciones interpretadas
-- Fácil generación de PDF
+## Contrato de los datos
 
+| Columna | Uso |
+| --- | --- |
+| `age` | Edad, de 16 a 100 |
+| `sex` | `Female` o `Male` |
+| `workclass` | `Gov`, `Private` o `Self-emp` |
+| `fnlwgt` | Peso muestral del censo. Se conserva en el archivo y se queda fuera del modelo |
+| `education` | Nivel educativo, codificado con un orden fijo |
+| `hours_per_week` | Horas, de 1 a 99 |
+| `label` | `>50K` o `<=50K`. El archivo a puntuar no la trae |
 
----
+`fnlwgt` describe el diseño de la muestra, no a la persona, por eso no entra al vector de features. La clase positiva es siempre `>50K` = 1, aunque sea la clase mayoritaria.
 
-##  **Evidencia de Ejecución**
+La probabilidad sintética de `>50K` empieza en 0.12 y suma 0.28 con título universitario, 0.12 adicional con maestría o doctorado, 0.16 entre 30 y 55 años, 0.12 con 40 horas o más, y 0.05 en el sector privado. El tope es 0.95. El código vive en `positive_probability`.
 
-###  **Resultados obtenidos:**
-- Dataset de 2000 registros procesado exitosamente
-- Pipeline completo implementado con 10 etapas
-- Modelo entrenado con métricas de evaluación (AUC y Accuracy)
-- Predicciones realizadas sobre 9 casos nuevos
+## Entrenamiento
 
-###  **Capturas recomendadas:**
-1. Notebook ejecutándose con datos cargados
-2. Salida del entrenamiento del modelo
-3. Métricas de evaluación del modelo
-4. Predicciones sobre nuevos datos
-5. Resumen final del proyecto
+1. El CSV se lee con un esquema explícito. Un valor que no se puede convertir queda nulo y la fila se rechaza.
+2. Se descartan filas fuera del contrato y duplicados exactos. Si la fracción inválida supera el límite, o falta una de las dos clases, el entrenamiento se detiene y deja el reporte de calidad.
+3. El holdout se hace antes de ajustar imputers, indexadores y el modelo. Los pesos de clase se calculan solo en el pliegue de entrenamiento.
+4. Las features numéricas son edad, horas, el ordinal de educación y un indicador de 40 horas o más. Sexo y tipo de empleo se codifican con one-hot. Las numéricas se estandarizan aparte para no reescalar las columnas binarias.
+5. El modelo es una regresión logística binomial con regularización L2 (`regParam` 0.01) y estandarización interna apagada.
 
+## Estructura
 
+```text
+src/income_pipeline/     comandos generate, train y score
+data/raw/                CSV de entrenamiento, generado
+data/samples/            solicitantes sin etiqueta
+tests/                   pruebas del contrato, el split y el modelo
+.github/workflows/       pytest en Ubuntu y Windows
+```
+
+## Pruebas
+
+```bash
+pytest
+```
+
+GitHub Actions ejecuta la misma suite en Ubuntu y en Windows, con Java 17.
+
+## Límites
+
+El generador no reproduce la distribución del censo. Un AUC alto aquí significa que la regresión sigue la regla documentada. Para datos nuevos, las categorías y los rangos tienen que respetar el contrato; las filas que no lo hacen se escriben en `data/scored/applicants.rejected.csv`.

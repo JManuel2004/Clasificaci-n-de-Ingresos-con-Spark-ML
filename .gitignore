@@ -13,6 +13,7 @@ build/
 models/
 artifacts/
 data/scored/
+data/raw/*.csv
 *.parquet
 .ipynb_checkpoints/
 .DS_Store
