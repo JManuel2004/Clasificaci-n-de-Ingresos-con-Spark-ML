@@ -26,6 +26,9 @@ income-score = "income_pipeline.score:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+income_pipeline = ["hadoop/PlainLocalFileSystem.java"]
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]

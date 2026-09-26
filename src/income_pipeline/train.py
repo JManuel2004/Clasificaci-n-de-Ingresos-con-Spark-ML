@@ -41,6 +41,18 @@ class TrainSettings:
     elastic_net: float = 0.0
     max_invalid_fraction: float = 0.05
 
+    def __post_init__(self) -> None:
+        if not 0 < self.test_fraction < 1:
+            raise ValueError("test_fraction must be between 0 and 1")
+        if self.max_iter < 1:
+            raise ValueError("max_iter must be at least 1")
+        if self.reg_param < 0:
+            raise ValueError("reg_param must be zero or positive")
+        if not 0 <= self.elastic_net <= 1:
+            raise ValueError("elastic_net must be between 0 and 1")
+        if not 0 <= self.max_invalid_fraction <= 1:
+            raise ValueError("max_invalid_fraction must be between 0 and 1")
+
 
 def _positive_rate(frame) -> float:
     rate = frame.agg(F.avg("label_index").alias("rate")).first()["rate"]
@@ -67,9 +79,10 @@ def _class_weight_report(train) -> dict:
 def train_dataframe(spark, frame, settings: TrainSettings) -> dict:
     """Fit on a cleaned, labeled frame and return the metrics payload."""
     labeled = with_label_index(frame).filter(F.col("label_index").isNotNull())
-    train, test = train_test_split(labeled, settings.test_fraction, settings.seed)
-    train = attach_class_weights(train).cache()
+    unweighted, test = train_test_split(labeled, settings.test_fraction, settings.seed)
+    train = attach_class_weights(unweighted).cache()
     train_rows = train.count()
+    unweighted.unpersist()
     test_rows = test.count()
     if train_rows == 0 or test_rows == 0:
         raise ValueError("train and test folds must both be non-empty")
@@ -156,6 +169,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--max-iter", type=int, default=100)
     parser.add_argument("--reg-param", type=float, default=0.01)
+    parser.add_argument("--elastic-net", type=float, default=0.0)
     parser.add_argument("--max-invalid-fraction", type=float, default=0.05)
     return parser.parse_args(argv)
 
@@ -170,18 +184,29 @@ def settings_from_args(args: argparse.Namespace) -> TrainSettings:
         seed=args.seed,
         max_iter=args.max_iter,
         reg_param=args.reg_param,
+        elastic_net=args.elastic_net,
         max_invalid_fraction=args.max_invalid_fraction,
     )
 
 
 def main(argv: list[str] | None = None) -> None:
     configure_logging()
-    settings = settings_from_args(parse_args(argv))
+    try:
+        settings = settings_from_args(parse_args(argv))
+    except ValueError as exc:
+        logger.error("%s", exc)
+        raise SystemExit(2) from exc
+    if not settings.input_path.is_file():
+        logger.error(
+            "input file not found: %s. Write one with: python -m income_pipeline generate",
+            settings.input_path,
+        )
+        raise SystemExit(1)
     spark = build_session("income-train")
     try:
         try:
             payload = train_from_csv(spark, settings)
-        except DataQualityError as exc:
+        except (DataQualityError, ValueError, FileNotFoundError) as exc:
             logger.error("training stopped: %s", exc)
             raise SystemExit(1) from exc
         write_json(settings.metrics_path, payload)
